@@ -1,0 +1,80 @@
+---
+import "@/styles/global.css"
+
+const TITLE = "Celebraty"
+const SITE_TITLE = `${TITLE} — Recordatorios de cumpleaños`
+const SITE_DESCRIPTION = "Recuerda los cumpleaños de tus amigos y familiares"
+const SITE_URL = "https://celebraty.vercel.app"
+const SITE_KEYWORDS = "cumpleaños, recordatorios, amigos, familia"
+---
+
+<!doctype html>
+<html lang="es" class="motion-safe:scroll-smooth motion-reduce:transition-none">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary Meta Tags -->
+    <title>{SITE_TITLE}</title>
+    <meta name="title" content={SITE_TITLE} />
+    <meta name="description" content={SITE_DESCRIPTION} />
+    <meta name="keywords" content={SITE_KEYWORDS} />
+    <link rel="canonical" href={SITE_URL} />
+
+    <!-- Open Graph Meta tags -->
+    <meta property="og:title" content={SITE_TITLE} />
+    <meta property="og:description" content={SITE_DESCRIPTION} />
+    <meta property="og:site_name" content={SITE_TITLE} />
+    <meta property="og:image" content={`${SITE_URL}/og-image.jpg`} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={SITE_URL} />
+
+    <!-- Schema.org Meta tags -->
+    <meta itemprop="name" content={SITE_TITLE} />
+    <meta itemprop="url" content={SITE_URL} />
+    <meta itemprop="description" content={SITE_DESCRIPTION} />
+
+    <!-- Twitter Meta tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={SITE_TITLE} />
+    <meta name="twitter:description" content={SITE_DESCRIPTION} />
+    <meta name="twitter:image" content={`${SITE_URL}/og-image.jpg`} />
+    <meta name="twitter:url" content={SITE_URL} />
+
+    <!-- Mobile Optimization -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content={TITLE} />
+
+    <!-- Theme Color -->
+    <meta name="theme-color" content="#faf6f1" />
+    <meta name="msapplication-TileColor" content="#faf6f1" />
+
+    <!-- Additional SEO -->
+    <meta name="author" content="<AUTHOR>" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="language" content="Spanish" />
+    <meta name="revisit-after" content="7 days" />
+
+    <!-- Conversion Optimization Tags -->
+    <meta name="application-name" content={TITLE} />
+    <meta name="msapplication-tooltip" content={SITE_DESCRIPTION} />
+    <meta name="msapplication-starturl" content={SITE_URL} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+  </head>
+
+  <body class="min-h-screen flex flex-col items-center justify-start py-16 px-4">
+    <slot />
+  </body>
+</html>
