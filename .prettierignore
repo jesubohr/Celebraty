@@ -1,0 +1,10 @@
+# Ignore artifacts:
+node_modules
+public
+dist
+.vercel
+pnpm-lock.yaml
+.env
+.env.example
+Dockerfile
+*.md
