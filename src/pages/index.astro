@@ -1,77 +1,36 @@
 ---
-import "../styles/global.css";
-import { db } from "../db/client";
-import { friends } from "../db/schema";
-import { getUpcomingBirthdays } from "../lib/today";
-import RegisterForm from "../components/RegisterForm";
-import UpcomingList from "../components/UpcomingList";
+import { getUpcomingBirthdays } from "@/lib/actions"
+import { tryCatch } from "@/lib/try-catch"
 
-let upcoming: ReturnType<typeof getUpcomingBirthdays> = [];
+import BaseLayout from "@/layouts/base.astro"
+import RegisterForm from "@/components/RegisterForm"
+import UpcomingList from "@/components/UpcomingList"
 
-try {
-  const all = await db.select().from(friends);
-  upcoming = getUpcomingBirthdays(all);
-} catch {
-  // DB not configured yet (local dev without env vars)
-}
+const result = await tryCatch(getUpcomingBirthdays())
+const upcoming = result.error ? [] : result.data
 ---
 
-<html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Celebraty 🎂 - Recordatorios de cumpleaños</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,700;1,300&family=Inter:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <style is:global>
-      * {
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        background: #faf6f1;
-        font-family: "Inter", sans-serif;
-        color: #1f1b16;
-      }
-    </style>
-  </head>
-  <body
-    class="min-h-screen flex flex-col items-center justify-start py-16 px-4"
-  >
-    <div class="w-full max-w-md space-y-10">
-      <!-- Header -->
-      <header class="text-center space-y-2">
-        <p class="text-4xl">🎂</p>
-        <h1
-          class="font-['Fraunces'] text-4xl font-bold text-warm-dark leading-tight"
-        >
-          Círculo de cumpleaños
-        </h1>
-        <p class="text-warm-muted text-sm max-w-xs mx-auto">
-          Registrate y recibe recordatorios cada vez que alguien del grupo
-          cumpla años.
-        </p>
-      </header>
+<BaseLayout>
+  <div class="w-full max-w-md space-y-10">
+    <!-- Header -->
+    <header class="text-center space-y-2">
+      <p class="text-4xl">🎂</p>
+      <h1 class="text-4xl font-bold text-warm-dark leading-tight">Círculo de cumpleaños</h1>
+      <p class="text-warm-muted text-sm max-w-xs mx-auto">
+        Registrate y recibe recordatorios cada vez que alguien del grupo cumpla años.
+      </p>
+    </header>
 
-      <!-- Form card -->
-      <section class="card">
-        <h2 class="font-['Fraunces'] text-xl font-bold text-warm-dark mb-5">
-          Unirme al círculo
-        </h2>
-        <RegisterForm client:load />
-      </section>
+    <!-- Form card -->
+    <section class="card">
+      <h2 class="text-xl font-bold text-warm-dark mb-5">Unirme al círculo</h2>
+      <RegisterForm client:load />
+    </section>
 
-      <!-- Upcoming -->
-      <section class="space-y-3">
-        <h2 class="font-['Fraunces'] text-xl font-bold text-warm-dark">
-          Próximos 30 días
-        </h2>
-        <UpcomingList upcoming={upcoming} client:load />
-      </section>
-    </div>
-  </body>
-</html>
+    <!-- Upcoming -->
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-warm-dark">Próximos 30 días</h2>
+      <UpcomingList upcoming={upcoming} client:load />
+    </section>
+  </div>
+</BaseLayout>
