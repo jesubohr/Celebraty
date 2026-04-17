@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro"
 import { z } from "zod"
-import { db } from "../../db/client"
-import { friends } from "../../db/schema"
 import { eq } from "drizzle-orm"
-import { randomUUID } from "crypto"
+import { randomUUID } from "node:crypto"
+
+import { db } from "@/db/client"
+import { friends } from "@/db/schema"
 
 const schema = z.object({
   name: z.string().min(1).max(60).trim(),

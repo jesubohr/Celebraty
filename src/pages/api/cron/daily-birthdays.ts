@@ -1,13 +1,20 @@
-import type { APIRoute } from "astro"
-import { db } from "../../../db/client"
-import { friends } from "../../../db/schema"
-import { resend } from "../../../lib/email/resend"
-import { DailyBirthdayDigest } from "../../../lib/email/DailyBirthdayDigest"
-import { getTodayInBogota } from "../../../lib/today"
-import { and, eq } from "drizzle-orm"
-import { render } from "@react-email/render"
 import React from "react"
+import type { APIRoute } from "astro"
+import { and, eq } from "drizzle-orm"
 import { toZonedTime } from "date-fns-tz"
+import { render } from "@react-email/render"
+
+import { db } from "@/db/client"
+import { friends } from "@/db/schema"
+import { resend } from "@/lib/email/resend"
+import { DailyBirthdayDigest } from "@/lib/email/DailyBirthdayDigest"
+
+const TZ = "America/Bogota"
+
+export function getTodayInBogota(): { month: number; day: number } {
+  const now = toZonedTime(new Date(), TZ)
+  return { month: now.getMonth() + 1, day: now.getDate() }
+}
 
 export const GET: APIRoute = async ({ request }) => {
   const auth = request.headers.get("authorization")
