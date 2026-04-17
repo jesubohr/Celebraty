@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-@theme {
+@theme inline {
   --color-warm-bg: #faf6f1;
   --color-warm-dark: #1f1b16;
   --color-warm-muted: #9c7b6a;
@@ -9,13 +9,19 @@
   --color-accent-hover: #d96d55;
 }
 
+@layer base {
+  html {
+    font-family: "Manrope Variable", sans-serif;
+  }
+}
+
 @layer components {
   .card {
     @apply bg-white rounded-3xl border border-warm-border p-6 shadow-sm;
   }
 
   .input {
-    @apply w-full rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-dark placeholder:text-warm-muted/60 outline-none transition-shadow focus:shadow-[0_0_0_2px_theme(colors.accent)];
+    @apply w-full rounded-2xl border border-warm-border bg-warm-bg px-4 py-3 text-sm text-warm-dark placeholder:text-warm-muted/60 outline-none transition-shadow focus:shadow-[0_0_0_2px_var(--color-accent)];
   }
 
   select.input {
