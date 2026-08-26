@@ -1,4 +1,4 @@
-import { Html, Head, Body, Container, Heading, Text, Section, Hr, Preview } from "@react-email/components"
+import { Html, Head, Body, Container, Heading, Text, Section, Hr, Preview } from "react-email"
 
 interface BirthdayPerson {
   name: string
