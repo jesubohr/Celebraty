@@ -2,7 +2,7 @@ import React from "react"
 import type { APIRoute } from "astro"
 import { and, eq } from "drizzle-orm"
 import { toZonedTime } from "date-fns-tz"
-import { render } from "@react-email/render"
+import { render } from "react-email"
 
 import { db } from "@/db/client"
 import { friends } from "@/db/schema"

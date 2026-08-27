@@ -4,7 +4,7 @@ A small, beautiful birthday reminder app for friend circles. Register your name,
 
 ## Stack
 
-- **Astro 5** — server-rendered, minimal JS
+- **Astro 7** — server-rendered, minimal JS
 - **Turso (libSQL + Drizzle)** — SQLite at the edge
 - **Resend + React Email** — transactional email
 - **Tailwind CSS v4 + motion/react** — soft/warm UI with purposeful animations
