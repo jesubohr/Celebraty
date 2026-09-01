@@ -20,13 +20,16 @@ const MONTHS = [
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30 }
 
-export default function RegisterForm() {
+interface Props {
+  email: string
+}
+
+export default function RegisterForm({ email }: Props) {
   const reduced = useReducedMotion()
   const [status, setStatus] = useState<Status>("idle")
   const [errorMsg, setErrorMsg] = useState("")
   const [form, setForm] = useState({
     name: "",
-    email: "",
     birthMonth: "",
     birthDay: "",
     birthYear: "",
@@ -46,7 +49,6 @@ export default function RegisterForm() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: form.name,
-        email: form.email,
         birthMonth: Number(form.birthMonth),
         birthDay: Number(form.birthDay),
         birthYear: form.birthYear ? Number(form.birthYear) : undefined,
@@ -57,6 +59,7 @@ export default function RegisterForm() {
     const data = await res.json()
     if (res.ok) {
       setStatus("success")
+      window.setTimeout(() => window.location.assign("/"), 900)
     } else {
       setStatus("error")
       setErrorMsg(data.error ?? "Algo salió mal.")
@@ -105,14 +108,7 @@ export default function RegisterForm() {
       </Field>
 
       <Field label="Tu correo">
-        <input
-          type="email"
-          value={form.email}
-          onChange={set("email")}
-          required
-          placeholder="ana@email.com"
-          className="input"
-        />
+        <input type="email" value={email} readOnly className="input opacity-70 cursor-not-allowed" />
       </Field>
 
       <div className="grid grid-cols-2 gap-3">
@@ -183,9 +179,9 @@ export default function RegisterForm() {
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <label className="block text-sm font-medium text-warm-dark">{label}</label>
+    <label className="block space-y-1">
+      <span className="block text-sm font-medium text-warm-dark">{label}</span>
       {children}
-    </div>
+    </label>
   )
 }

@@ -5,17 +5,21 @@ import { randomUUID } from "node:crypto"
 
 import { db } from "@/db/client"
 import { friends } from "@/db/schema"
+import { getCurrentSession } from "@/lib/auth/session"
+import { linkSessionToFriend } from "@/lib/auth/store"
 
 const schema = z.object({
   name: z.string().min(1).max(60).trim(),
-  email: z.string().email().toLowerCase(),
   birthDay: z.coerce.number().int().min(1).max(31),
   birthMonth: z.coerce.number().int().min(1).max(12),
   birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
   website: z.string().max(0), // honeypot
 })
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const session = await getCurrentSession(db, cookies)
+  if (!session) return json({ error: "No autorizado." }, 401)
+
   const body = await request.json().catch(() => null)
   if (!body) return json({ error: "Datos inválidos." }, 400)
 
@@ -25,21 +29,24 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: msg }, 400)
   }
 
-  const { name, email, birthDay, birthMonth, birthYear, website } = parsed.data
+  const { name, birthDay, birthMonth, birthYear, website } = parsed.data
   if (website) return json({ error: "Bot detected." }, 400)
 
-  const existing = await db.select().from(friends).where(eq(friends.email, email)).limit(1)
+  const existing = await db.select().from(friends).where(eq(friends.email, session.email)).limit(1)
   if (existing.length > 0) return json({ error: "Ya estás registrado con ese correo 🎉" }, 409)
 
+  const friendId = randomUUID()
   await db.insert(friends).values({
-    id: randomUUID(),
+    id: friendId,
     name,
-    email,
+    email: session.email,
     birthMonth,
     birthDay,
     birthYear: birthYear ?? null,
     createdAt: Date.now(),
   })
+
+  await linkSessionToFriend(db, session.id, friendId)
 
   return json({ ok: true })
 }

@@ -7,6 +7,12 @@
   --color-warm-border: #f0e8df;
   --color-accent: #e8826b;
   --color-accent-hover: #d96d55;
+
+  --color-bubble-1: #f6d9c9;
+  --color-bubble-2: #f4c9c9;
+  --color-bubble-3: #f0dfae;
+  --color-bubble-4: #c9dfc4;
+  --color-bubble-5: #d8cfe8;
 }
 
 @layer base {
