@@ -1,107 +1,120 @@
-import { useState } from "react"
-import { motion, AnimatePresence, useReducedMotion } from "motion/react"
+import { motion, useReducedMotion } from "motion/react"
+import { useEffect, useRef, useState } from "react"
 
 type Status = "idle" | "loading" | "success" | "error"
 
-const spring = { type: "spring" as const, stiffness: 300, damping: 30 }
+const spring = { type: "spring" as const, stiffness: 300, damping: 30, bounce: 0 }
 
 interface Props {
   initialNotice?: string
 }
 
 export default function EmailLoginForm({ initialNotice }: Props) {
-  const reduced = useReducedMotion()
+  const reducedMotion = useReducedMotion()
+  const inputRef = useRef<HTMLInputElement>(null)
+  const successHeadingRef = useRef<HTMLHeadingElement>(null)
   const [status, setStatus] = useState<Status>("idle")
   const [email, setEmail] = useState("")
-  const [errorMsg, setErrorMsg] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setStatus("loading")
-    setErrorMsg("")
+  useEffect(() => {
+    if (status === "success") successHeadingRef.current?.focus()
+  }, [status])
 
-    const res = await fetch("/api/auth/start", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    })
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault()
+    setErrorMessage("")
 
-    if (res.ok) {
-      setStatus("success")
-    } else {
-      const data = await res.json().catch(() => null)
+    if (!inputRef.current?.validity.valid) {
       setStatus("error")
-      setErrorMsg(data?.error ?? "Algo salió mal.")
+      setErrorMessage("Ingresa un correo válido.")
+      inputRef.current?.focus()
+      return
+    }
+
+    setStatus("loading")
+    try {
+      const response = await fetch("/api/auth/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+
+      if (response.ok) {
+        setStatus("success")
+        return
+      }
+
+      const data = await response.json().catch(() => null)
+      setStatus("error")
+      setErrorMessage(data?.error ?? "No pudimos enviar el enlace. Revisa tu correo e inténtalo de nuevo.")
+      inputRef.current?.focus()
+    } catch {
+      setStatus("error")
+      setErrorMessage("No pudimos enviar el enlace. Revisa tu conexión e inténtalo de nuevo.")
+      inputRef.current?.focus()
     }
   }
 
   if (status === "success") {
     return (
       <motion.div
-        initial={reduced ? false : { opacity: 0, scale: 0.95 }}
+        initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={spring}
-        className="text-center py-8 space-y-2"
+        className="space-y-2 py-8 text-center"
       >
-        <div className="text-4xl">📬</div>
-        <p className="text-warm-dark font-semibold text-lg">Revisa tu correo</p>
-        <p className="text-warm-muted text-sm">Te enviamos un enlace para entrar. Vence en 15 minutos.</p>
+        <h2 ref={successHeadingRef} tabIndex={-1} className="text-lg font-semibold text-ink">
+          Revisa tu correo
+        </h2>
+        <p className="text-sm text-ink-muted">Te enviamos un enlace para entrar. Vence en 15 minutos.</p>
       </motion.div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate aria-busy={status === "loading"}>
       {initialNotice && (
-        <p className="text-warm-muted text-sm text-center bg-warm-bg border border-warm-border rounded-2xl px-4 py-3">
+        <p role="status" className="rounded-2xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted">
           {initialNotice}
         </p>
       )}
 
-      <Field label="Tu correo">
+      <div className="space-y-2">
+        <label htmlFor="login-email" className="block text-sm font-medium text-ink">
+          Tu correo
+        </label>
         <input
+          ref={inputRef}
+          id="login-email"
+          name="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(event) => setEmail(event.target.value)}
           required
+          autoComplete="email"
+          spellCheck={false}
           placeholder="ana@email.com"
+          aria-invalid={errorMessage ? true : undefined}
+          aria-describedby={errorMessage ? "login-email-error" : undefined}
           className="input"
         />
-      </Field>
-
-      <AnimatePresence>
-        {status === "error" && (
-          <motion.p
-            key="err"
-            initial={reduced ? false : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="text-red-500 text-sm"
-          >
-            {errorMsg}
-          </motion.p>
+        {errorMessage && (
+          <p id="login-email-error" role="alert" className="text-sm text-danger">
+            {errorMessage}
+          </p>
         )}
-      </AnimatePresence>
+      </div>
 
       <motion.button
         type="submit"
         disabled={status === "loading"}
-        whileTap={reduced ? {} : { scale: 0.98 }}
-        transition={{ duration: 0.1 }}
-        className="w-full btn-primary"
+        whileTap={reducedMotion ? undefined : { scale: 0.96 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+        className="btn-primary"
       >
-        {status === "loading" ? "Enviando…" : "Enviar enlace de acceso"}
+        {status === "loading" ? "Enviando enlace…" : "Enviar enlace"}
       </motion.button>
     </form>
-  )
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block space-y-1">
-      <span className="block text-sm font-medium text-warm-dark">{label}</span>
-      {children}
-    </label>
   )
 }

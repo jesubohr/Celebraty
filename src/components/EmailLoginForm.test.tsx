@@ -25,7 +25,7 @@ describe("EmailLoginForm", () => {
     fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "a@example.com" } })
     fireEvent.click(screen.getByRole("button"))
 
-    const button = await screen.findByRole("button", { name: "Enviando…" })
+    const button = await screen.findByRole("button", { name: "Enviando enlace…" })
     expect(button).toBeDisabled()
 
     resolveFetch(new Response(JSON.stringify({ ok: true }), { status: 200 }))
@@ -38,7 +38,8 @@ describe("EmailLoginForm", () => {
     fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "a@example.com" } })
     fireEvent.click(screen.getByRole("button"))
 
-    expect(await screen.findByText("Revisa tu correo")).toBeInTheDocument()
+    const heading = await screen.findByRole("heading", { name: "Revisa tu correo" })
+    expect(heading).toHaveFocus()
   })
 
   it("shows the server error message when the request fails", async () => {
@@ -53,7 +54,24 @@ describe("EmailLoginForm", () => {
     fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "a@example.com" } })
     fireEvent.click(screen.getByRole("button"))
 
-    expect(await screen.findByText("Ingresa un correo válido.")).toBeInTheDocument()
+    const input = screen.getByLabelText("Tu correo")
+    const error = await screen.findByRole("alert")
+    expect(error).toHaveTextContent("Ingresa un correo válido.")
+    expect(input).toHaveAttribute("aria-invalid", "true")
+    expect(input).toHaveAttribute("aria-describedby", error.id)
+  })
+
+  it("validates the email in Spanish before sending", async () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal("fetch", fetchMock)
+    render(<EmailLoginForm />)
+
+    fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "correo-invalido" } })
+    fireEvent.click(screen.getByRole("button", { name: "Enviar enlace" }))
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Ingresa un correo válido.")
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(screen.getByLabelText("Tu correo")).toHaveFocus()
   })
 
   it("renders an initial notice for an expired login link", () => {

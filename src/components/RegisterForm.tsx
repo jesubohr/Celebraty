@@ -1,187 +1,203 @@
-import { useState } from "react"
-import { motion, AnimatePresence, useReducedMotion } from "motion/react"
+import { motion, useReducedMotion } from "motion/react"
+import { useEffect, useRef, useState } from "react"
+
+import BirthdayField, { getBirthdayError, type BirthdayValue } from "@/components/BirthdayField"
+import { toBirthdayCountdown } from "@/lib/birthdays"
 
 type Status = "idle" | "loading" | "success" | "error"
-
-const MONTHS = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-]
-
-const spring = { type: "spring" as const, stiffness: 300, damping: 30 }
+type FieldErrors = Partial<Record<"name" | "birthday", string>>
 
 interface Props {
   email: string
 }
 
+interface RegisterErrorResponse {
+  error?: string
+  errors?: Partial<Record<"name" | "birthDay" | "birthMonth" | "birthYear", string[]>>
+}
+
+const spring = { type: "spring" as const, stiffness: 300, damping: 30, bounce: 0 }
+
 export default function RegisterForm({ email }: Props) {
-  const reduced = useReducedMotion()
+  const reducedMotion = useReducedMotion()
+  const successHeadingRef = useRef<HTMLHeadingElement>(null)
+  const nameRef = useRef<HTMLInputElement>(null)
   const [status, setStatus] = useState<Status>("idle")
-  const [errorMsg, setErrorMsg] = useState("")
-  const [form, setForm] = useState({
-    name: "",
-    birthMonth: "",
-    birthDay: "",
-    birthYear: "",
-    website: "",
-  })
+  const [formError, setFormError] = useState("")
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
+  const [name, setName] = useState("")
+  const [birthday, setBirthday] = useState<BirthdayValue>({ day: "", month: "", year: "" })
+  const [website, setWebsite] = useState("")
 
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm((p) => ({ ...p, [k]: e.target.value }))
+  useEffect(() => {
+    if (status === "success") successHeadingRef.current?.focus()
+  }, [status])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit: React.SubmitEventHandler<HTMLFormElement> = async (event) => {
+    event.preventDefault()
+    setFormError("")
+    setFieldErrors({})
+
+    const nextErrors: FieldErrors = {
+      name: name.trim() ? undefined : "Ingresa tu nombre.",
+      birthday: getBirthdayError(birthday),
+    }
+    if (nextErrors.name || nextErrors.birthday) {
+      setStatus("error")
+      setFieldErrors(nextErrors)
+      if (nextErrors.name) nameRef.current?.focus()
+      else document.querySelector<HTMLInputElement>('[aria-label="Día"]')?.focus()
+      return
+    }
+
     setStatus("loading")
-    setErrorMsg("")
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          birthMonth: Number(birthday.month),
+          birthDay: Number(birthday.day),
+          birthYear: birthday.year ? Number(birthday.year) : undefined,
+          website,
+        }),
+      })
+      const data = (await response.json().catch(() => ({}))) as RegisterErrorResponse
 
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: form.name,
-        birthMonth: Number(form.birthMonth),
-        birthDay: Number(form.birthDay),
-        birthYear: form.birthYear ? Number(form.birthYear) : undefined,
-        website: form.website,
-      }),
-    })
+      if (!response.ok) {
+        const serverErrors = data.errors ?? {}
+        const birthdayError = serverErrors.birthDay?.[0] ?? serverErrors.birthMonth?.[0] ?? serverErrors.birthYear?.[0]
+        const nextServerErrors = { name: serverErrors.name?.[0], birthday: birthdayError }
+        setStatus("error")
+        setFieldErrors(nextServerErrors)
+        setFormError(
+          nextServerErrors.name || nextServerErrors.birthday
+            ? ""
+            : data.error ?? "No pudimos completar tu registro. Revisa los datos e inténtalo de nuevo.",
+        )
+        if (nextServerErrors.name) nameRef.current?.focus()
+        else if (nextServerErrors.birthday) document.querySelector<HTMLInputElement>('[aria-label="Día"]')?.focus()
+        return
+      }
 
-    const data = await res.json()
-    if (res.ok) {
+      const countdown = toBirthdayCountdown({
+        id: "new-registration",
+        name,
+        birthMonth: Number(birthday.month),
+        birthDay: Number(birthday.day),
+      })
+      window.dispatchEvent(new CustomEvent("celebraty:registered", { detail: countdown }))
       setStatus("success")
       window.setTimeout(() => window.location.assign("/"), 900)
-    } else {
+    } catch {
       setStatus("error")
-      setErrorMsg(data.error ?? "Algo salió mal.")
+      setFormError("No pudimos completar tu registro. Revisa tu conexión e inténtalo de nuevo.")
     }
   }
 
   if (status === "success") {
     return (
       <motion.div
-        initial={reduced ? false : { opacity: 0, scale: 0.95 }}
+        initial={reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={spring}
-        className="text-center py-8 space-y-2"
+        className="space-y-2 py-8 text-center"
       >
-        <div className="text-4xl">🎉</div>
-        <p className="text-warm-dark font-semibold text-lg">¡Listo! Ya estás en la lista.</p>
-        <p className="text-warm-muted text-sm">Te llegará un email cuando alguien cumpla años.</p>
+        <h2 ref={successHeadingRef} tabIndex={-1} className="text-lg font-semibold text-ink">
+          Ya estás en el círculo
+        </h2>
+        <p className="text-sm text-ink-muted">Te avisaremos por correo cuando alguien cumpla años.</p>
       </motion.div>
     )
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-      {/* honeypot */}
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate aria-busy={status === "loading"}>
       <input
         type="text"
         name="website"
-        value={form.website}
-        onChange={set("website")}
+        value={website}
+        onChange={(event) => setWebsite(event.target.value)}
         className="hidden"
         tabIndex={-1}
         autoComplete="off"
         aria-hidden="true"
       />
 
-      <Field label="Tu nombre">
+      <Field label="Tu nombre" inputId="register-name" error={fieldErrors.name}>
         <input
+          ref={nameRef}
+          id="register-name"
+          name="name"
           type="text"
-          value={form.name}
-          onChange={set("name")}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           required
           maxLength={60}
+          autoComplete="name"
           placeholder="Ana García"
+          aria-invalid={fieldErrors.name ? true : undefined}
+          aria-describedby={fieldErrors.name ? "register-name-error" : undefined}
           className="input"
         />
       </Field>
 
-      <Field label="Tu correo">
-        <input type="email" value={email} readOnly className="input opacity-70 cursor-not-allowed" />
-      </Field>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Mes de nacimiento">
-          <select value={form.birthMonth} onChange={set("birthMonth")} required className="input">
-            <option value="">— Mes —</option>
-            {MONTHS.map((m, i) => (
-              <option key={m} value={i + 1}>
-                {m}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field label="Día de nacimiento">
-          <input
-            type="number"
-            value={form.birthDay}
-            onChange={set("birthDay")}
-            required
-            min={1}
-            max={31}
-            placeholder="15"
-            className="input"
-          />
-        </Field>
-      </div>
-
-      <Field label="Año (opcional)">
+      <Field label="Tu correo" inputId="register-email">
         <input
-          type="number"
-          value={form.birthYear}
-          onChange={set("birthYear")}
-          min={1900}
-          max={new Date().getFullYear()}
-          placeholder={String(new Date().getFullYear() - 25)}
-          className="input"
+          id="register-email"
+          name="email"
+          type="email"
+          value={email}
+          readOnly
+          autoComplete="email"
+          className="input cursor-not-allowed opacity-70"
         />
       </Field>
 
-      <AnimatePresence>
-        {status === "error" && (
-          <motion.p
-            key="err"
-            initial={reduced ? false : { opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="text-red-500 text-sm"
-          >
-            {errorMsg}
-          </motion.p>
-        )}
-      </AnimatePresence>
+      <BirthdayField value={birthday} onChange={setBirthday} error={fieldErrors.birthday} />
+
+      {formError && (
+        <p role="alert" className="text-sm text-danger">
+          {formError}
+        </p>
+      )}
 
       <motion.button
         type="submit"
         disabled={status === "loading"}
-        whileTap={reduced ? {} : { scale: 0.98 }}
-        transition={{ duration: 0.1 }}
-        className="w-full btn-primary"
+        whileTap={reducedMotion ? undefined : { scale: 0.96 }}
+        transition={{ duration: 0.16, ease: "easeOut" }}
+        className="btn-primary"
       >
-        {status === "loading" ? "Registrando…" : "Unirme al círculo 🎂"}
+        {status === "loading" ? "Uniéndote…" : "Unirme"}
       </motion.button>
     </form>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  inputId,
+  error,
+  children,
+}: {
+  label: string
+  inputId: string
+  error?: string
+  children: React.ReactNode
+}) {
   return (
-    <label className="block space-y-1">
-      <span className="block text-sm font-medium text-warm-dark">{label}</span>
+    <div className="space-y-2">
+      <label htmlFor={inputId} className="block text-sm font-medium text-ink">
+        {label}
+      </label>
       {children}
-    </label>
+      {error && (
+        <p id={`${inputId}-error`} role="alert" className="text-sm text-danger">
+          {error}
+        </p>
+      )}
+    </div>
   )
 }

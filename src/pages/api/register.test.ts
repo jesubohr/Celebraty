@@ -81,6 +81,41 @@ beforeEach(async () => {
 })
 
 describe("POST /api/register", () => {
+  it("returns Spanish errors grouped by field", async () => {
+    const rawToken = await createSession(db, "new@example.com", null)
+    const cookies = new FakeCookies()
+    cookies.set(SESSION_COOKIE_NAME, rawToken)
+
+    const res = await registerPOST({
+      request: registerRequest({ name: "", birthMonth: 13, birthDay: 0, website: "" }),
+      cookies: cookies as unknown as AstroCookies,
+    } as never)
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toEqual({
+      error: "Revisa los datos marcados.",
+      errors: {
+        name: ["Ingresa tu nombre."],
+        birthDay: ["El día debe estar entre 1 y 31."],
+        birthMonth: ["El mes debe estar entre 1 y 12."],
+      },
+    })
+  })
+
+  it("rejects a day that does not exist in the selected month", async () => {
+    const rawToken = await createSession(db, "new@example.com", null)
+    const cookies = new FakeCookies()
+    cookies.set(SESSION_COOKIE_NAME, rawToken)
+
+    const res = await registerPOST({
+      request: registerRequest({ name: "Ana", birthMonth: 2, birthDay: 31, website: "" }),
+      cookies: cookies as unknown as AstroCookies,
+    } as never)
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({ errors: { birthDay: ["Febrero no tiene 31 días."] } })
+  })
+
   it("rejects a request with no session", async () => {
     const cookies = new FakeCookies()
     const res = await registerPOST({

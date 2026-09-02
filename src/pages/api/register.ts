@@ -8,13 +8,52 @@ import { friends } from "@/db/schema"
 import { getCurrentSession } from "@/lib/auth/session"
 import { linkSessionToFriend } from "@/lib/auth/store"
 
-const schema = z.object({
-  name: z.string().min(1).max(60).trim(),
-  birthDay: z.coerce.number().int().min(1).max(31),
-  birthMonth: z.coerce.number().int().min(1).max(12),
-  birthYear: z.coerce.number().int().min(1900).max(new Date().getFullYear()).optional(),
-  website: z.string().max(0), // honeypot
-})
+const MONTH_NAMES = [
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
+]
+
+const schema = z
+  .object({
+    name: z.string().trim().min(1, "Ingresa tu nombre.").max(60, "El nombre puede tener hasta 60 caracteres."),
+    birthDay: z.coerce
+      .number()
+      .int("Ingresa un día válido.")
+      .min(1, "El día debe estar entre 1 y 31.")
+      .max(31, "El día debe estar entre 1 y 31."),
+    birthMonth: z.coerce
+      .number()
+      .int("Ingresa un mes válido.")
+      .min(1, "El mes debe estar entre 1 y 12.")
+      .max(12, "El mes debe estar entre 1 y 12."),
+    birthYear: z.coerce
+      .number()
+      .int("Ingresa un año válido.")
+      .min(1900, "El año debe ser 1900 o posterior.")
+      .max(new Date().getFullYear(), "El año no puede estar en el futuro.")
+      .optional(),
+    website: z.string(),
+  })
+  .superRefine(({ birthDay, birthMonth }, context) => {
+    if (birthMonth < 1 || birthMonth > 12 || birthDay < 1 || birthDay > 31) return
+    const maximumDay = new Date(2024, birthMonth, 0).getDate()
+    if (birthDay <= maximumDay) return
+    context.addIssue({
+      code: "custom",
+      path: ["birthDay"],
+      message: `${MONTH_NAMES[birthMonth - 1]} no tiene ${birthDay} días.`,
+    })
+  })
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const session = await getCurrentSession(db, cookies)
@@ -25,15 +64,14 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   const parsed = schema.safeParse(body)
   if (!parsed.success) {
-    const msg = parsed.error.issues[0]?.message ?? "Datos inválidos."
-    return json({ error: msg }, 400)
+    return json({ error: "Revisa los datos marcados.", errors: z.flattenError(parsed.error).fieldErrors }, 400)
   }
 
   const { name, birthDay, birthMonth, birthYear, website } = parsed.data
-  if (website) return json({ error: "Bot detected." }, 400)
+  if (website) return json({ error: "No pudimos completar el registro." }, 400)
 
   const existing = await db.select().from(friends).where(eq(friends.email, session.email)).limit(1)
-  if (existing.length > 0) return json({ error: "Ya estás registrado con ese correo 🎉" }, 409)
+  if (existing.length > 0) return json({ error: "Ya estás en el círculo con ese correo." }, 409)
 
   const friendId = randomUUID()
   await db.insert(friends).values({
