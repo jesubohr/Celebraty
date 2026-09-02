@@ -4,8 +4,8 @@
   "description": "No te olvides de ningún cumpleaños. Recordatorios diarios por email para tu círculo de amigos.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#FDF6EC",
-  "theme_color": "#FDF6EC",
+  "background_color": "#FAF6F1",
+  "theme_color": "#FAF6F1",
   "icons": [
     {
       "src": "/logo.png",

@@ -14,7 +14,7 @@ export default function LogoutButton() {
       type="button"
       onClick={handleLogout}
       disabled={loading}
-      className="text-sm text-warm-muted hover:text-warm-dark transition-colors underline decoration-warm-border underline-offset-4 disabled:opacity-60 cursor-pointer"
+      className="min-h-11 cursor-pointer touch-manipulation text-sm font-medium text-ink-muted underline decoration-line-strong underline-offset-4 transition-colors duration-150 hover:text-ink disabled:cursor-wait disabled:opacity-60"
     >
       {loading ? "Saliendo…" : "Cerrar sesión"}
     </button>

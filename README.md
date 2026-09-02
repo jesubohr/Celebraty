@@ -1,6 +1,6 @@
 # Celebraty 🎂
 
-A small, beautiful birthday reminder app for friend circles. Sign in with your email, join the circle with your name and birthdate, and see everyone's birthday as a packed-bubble diagram — every morning, everyone on the list gets an email when someone has a birthday that day.
+A small, beautiful birthday reminder app for friend circles. Sign in with your email, join the circle with your name and birthdate, and see everyone's birthday around a year ring — every morning, everyone in the circle gets an email when someone has a birthday that day.
 
 ## Stack
 
@@ -8,7 +8,7 @@ A small, beautiful birthday reminder app for friend circles. Sign in with your e
 - **Turso (libSQL + Drizzle)** — SQLite at the edge
 - **Resend + React Email** — transactional email and passwordless login links
 - **Tailwind CSS v4 + motion/react** — soft/warm UI with purposeful animations
-- **d3-hierarchy** — deterministic packed-circle layout for the birthday chart
+- **date-fns** — birthday countdown and year-ring date geometry
 - **Vercel** — hosting + daily cron at 5:00 a.m. Bogotá (10:00 UTC)
 
 ## Authentication
