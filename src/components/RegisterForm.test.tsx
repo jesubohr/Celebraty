@@ -41,12 +41,14 @@ describe("RegisterForm", () => {
   it("links server field errors to their input", async () => {
     vi.stubGlobal(
       "fetch",
-      vi.fn().mockResolvedValue(
-        new Response(
-          JSON.stringify({ error: "Revisa los datos marcados.", errors: { name: ["Ingresa tu nombre."] } }),
-          { status: 400 },
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(
+            JSON.stringify({ error: "Revisa los datos marcados.", errors: { name: ["Ingresa tu nombre."] } }),
+            { status: 400 },
+          ),
         ),
-      ),
     )
     render(<RegisterForm email="ana@example.com" />)
     fillValidForm()
@@ -57,6 +59,20 @@ describe("RegisterForm", () => {
     expect(name).toHaveAttribute("aria-invalid", "true")
     expect(name).toHaveAttribute("aria-describedby", error.id)
     expect(name).toHaveFocus()
+  })
+
+  it("clears stale field errors as their values change", async () => {
+    render(<RegisterForm email="ana@example.com" />)
+    fireEvent.click(screen.getByRole("button", { name: "Unirme" }))
+
+    expect(await screen.findByText("Ingresa tu nombre.")).toBeInTheDocument()
+    expect(screen.getByText("Ingresa el día de tu cumpleaños.")).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText("Tu nombre"), { target: { value: "Ana" } })
+    fireEvent.change(screen.getByLabelText("Día"), { target: { value: "15" } })
+
+    expect(screen.queryByText("Ingresa tu nombre.")).not.toBeInTheDocument()
+    expect(screen.queryByText("Ingresa el día de tu cumpleaños.")).not.toBeInTheDocument()
   })
 
   it("moves focus to success and announces the new dot", async () => {

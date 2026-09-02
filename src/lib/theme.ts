@@ -68,3 +68,6 @@ export const themeCss = `
 `.trim()
 
 export const emailFontFamily = "Manrope, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+
+const emailDark = palette.dark
+export const emailDarkModeCss = `@media(prefers-color-scheme:dark){.email-body{background-color:${emailDark.ground.hex}!important}.email-card{background-color:${emailDark.surface.hex}!important;border-color:${emailDark.line.hex}!important}.email-ink{color:${emailDark.ink.hex}!important}.email-muted{color:${emailDark.inkMuted.hex}!important}.email-line{border-color:${emailDark.line.hex}!important}}`

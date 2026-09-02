@@ -1,5 +1,5 @@
 import { Html, Head, Body, Container, Heading, Text, Section, Hr, Preview, Button } from "react-email"
-import { emailFontFamily, palette } from "@/lib/theme"
+import { emailDarkModeCss, emailFontFamily, palette } from "@/lib/theme"
 
 interface Props {
   loginUrl: string
@@ -7,12 +7,11 @@ interface Props {
 
 export function LoginLink({ loginUrl }: Props) {
   const light = palette.light
-  const dark = palette.dark
 
   return (
     <Html lang="es">
       <Head>
-        <style>{`@media(prefers-color-scheme:dark){.email-body{background-color:${dark.ground.hex}!important}.email-card{background-color:${dark.surface.hex}!important}.email-ink{color:${dark.ink.hex}!important}.email-muted{color:${dark.inkMuted.hex}!important}.email-line{border-color:${dark.line.hex}!important}}`}</style>
+        <style>{emailDarkModeCss}</style>
       </Head>
       <Preview>Tu enlace para entrar a Celebraty</Preview>
       <Body className="email-body" style={{ backgroundColor: light.ground.hex, fontFamily: emailFontFamily, margin: 0 }}>
@@ -39,7 +38,7 @@ export function LoginLink({ loginUrl }: Props) {
               href={loginUrl}
               style={{
                 backgroundColor: light.emberStrong.hex,
-                color: "#fff",
+                color: light.field.hex,
                 padding: "12px 24px",
                 borderRadius: 12,
                 fontSize: 15,

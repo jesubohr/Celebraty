@@ -90,4 +90,20 @@ describe("getBirthdayCountdowns", () => {
   it("returns an empty list for an empty circle", () => {
     expect(getBirthdayCountdowns([], NOW)).toEqual([])
   })
+
+  it("keeps same-day birthdays correct regardless of insert order", () => {
+    const friends = [
+      { id: "later", name: "Luis Cano", birthMonth: 6, birthDay: 18 },
+      { id: "today-z", name: "Zoe Alba", birthMonth: 6, birthDay: 15 },
+      { id: "today-a", name: "Ana Beta", birthMonth: 6, birthDay: 15 },
+    ]
+
+    const result = getBirthdayCountdowns(friends, NOW)
+
+    expect(result.map(({ id, daysUntil, countdownLabel }) => ({ id, daysUntil, countdownLabel }))).toEqual([
+      { id: "today-a", daysUntil: 0, countdownLabel: "Hoy" },
+      { id: "today-z", daysUntil: 0, countdownLabel: "Hoy" },
+      { id: "later", daysUntil: 3, countdownLabel: "3d" },
+    ])
+  })
 })

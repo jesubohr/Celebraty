@@ -18,6 +18,7 @@ describe("YearRing", () => {
     expect(container.querySelector("[data-ring-track]")).toBeInTheDocument()
     expect(container.querySelector("[data-window-arc]")).toBeInTheDocument()
     expect(container.querySelector("[data-today-marker]")).toBeInTheDocument()
+    expect(container.querySelector("section")).not.toHaveAttribute("aria-labelledby")
   })
 
   it("shows twelve Spanish month ticks", () => {
@@ -33,6 +34,7 @@ describe("YearRing", () => {
     expect(screen.getByRole("list")).toHaveTextContent("Hoy")
     expect(screen.getByRole("list")).toHaveTextContent("Luis C.")
     expect(screen.getByRole("list")).toHaveTextContent("3d")
+    expect(container.querySelector("section")).toHaveAttribute("aria-labelledby", "upcoming-heading")
   })
 
   it("links keyboard focus and pointer hover to the matching dot", () => {

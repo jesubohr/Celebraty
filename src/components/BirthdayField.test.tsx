@@ -65,9 +65,17 @@ describe("BirthdayField", () => {
     const day = screen.getByLabelText("Día")
     fireEvent.blur(day)
 
-    expect(screen.getByText("Febrero no tiene 31 días.")).toBeInTheDocument()
+    const error = screen.getByText("Febrero no tiene 31 días.")
+    expect(error).toBeInTheDocument()
     expect(day).toHaveAttribute("aria-invalid", "true")
-    expect(day).toHaveAttribute("aria-describedby", "birthday-error")
+    expect(day).toHaveAttribute("aria-describedby", error.id)
+  })
+
+  it("rejects February 29 when the supplied year is not a leap year", () => {
+    renderField({ day: "29", month: "02", year: "1999" })
+    fireEvent.blur(screen.getByLabelText("Día"))
+
+    expect(screen.getByText("Febrero no tiene 29 días en 1999.")).toBeInTheDocument()
   })
 
   it("uses one labelled group and text inputs with numeric keyboards", () => {

@@ -45,9 +45,7 @@ describe("EmailLoginForm", () => {
   it("shows the server error message when the request fails", async () => {
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue(new Response(JSON.stringify({ error: "Ingresa un correo válido." }), { status: 400 })),
+      vi.fn().mockResolvedValue(new Response(JSON.stringify({ error: "Ingresa un correo válido." }), { status: 400 })),
     )
 
     render(<EmailLoginForm />)
@@ -72,6 +70,17 @@ describe("EmailLoginForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Ingresa un correo válido.")
     expect(fetchMock).not.toHaveBeenCalled()
     expect(screen.getByLabelText("Tu correo")).toHaveFocus()
+  })
+
+  it("clears a stale email error while the user corrects the address", async () => {
+    render(<EmailLoginForm />)
+    fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "correo-invalido" } })
+    fireEvent.click(screen.getByRole("button", { name: "Enviar enlace" }))
+
+    expect(await screen.findByRole("alert")).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText("Tu correo"), { target: { value: "ana@example.com" } })
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument()
   })
 
   it("renders an initial notice for an expired login link", () => {

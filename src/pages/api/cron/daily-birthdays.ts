@@ -7,7 +7,7 @@ import { render } from "react-email"
 import { db } from "@/db/client"
 import { friends } from "@/db/schema"
 import { resend } from "@/lib/email/resend"
-import { DailyBirthdayDigest } from "@/lib/email/DailyBirthdayDigest"
+import { DailyBirthdayDigest, dailyBirthdaySubject } from "@/lib/email/DailyBirthdayDigest"
 
 const TZ = "America/Bogota"
 
@@ -37,10 +37,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const html = await render(React.createElement(DailyBirthdayDigest, { birthdays: todayFriends, year }))
 
-  const subject =
-    todayFriends.length === 1
-      ? `🎂 Hoy cumple años ${todayFriends[0].name}!`
-      : `🎂 Hoy cumplen años ${todayFriends.length} amigos!`
+  const subject = dailyBirthdaySubject(todayFriends)
 
   const from = import.meta.env.FROM_EMAIL
 

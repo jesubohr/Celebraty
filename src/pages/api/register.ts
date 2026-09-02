@@ -42,16 +42,17 @@ const schema = z
       .min(1900, "El año debe ser 1900 o posterior.")
       .max(new Date().getFullYear(), "El año no puede estar en el futuro.")
       .optional(),
-    website: z.string(),
+    website: z.string().max(200),
   })
-  .superRefine(({ birthDay, birthMonth }, context) => {
+  .superRefine(({ birthDay, birthMonth, birthYear }, context) => {
     if (birthMonth < 1 || birthMonth > 12 || birthDay < 1 || birthDay > 31) return
-    const maximumDay = new Date(2024, birthMonth, 0).getDate()
+    const maximumDay = new Date(birthYear ?? 2024, birthMonth, 0).getDate()
     if (birthDay <= maximumDay) return
+    const yearContext = birthYear ? ` en ${birthYear}` : ""
     context.addIssue({
       code: "custom",
       path: ["birthDay"],
-      message: `${MONTH_NAMES[birthMonth - 1]} no tiene ${birthDay} días.`,
+      message: `${MONTH_NAMES[birthMonth - 1]} no tiene ${birthDay} días${yearContext}.`,
     })
   })
 

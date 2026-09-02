@@ -75,7 +75,10 @@ export default function EmailLoginForm({ initialNotice }: Props) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate aria-busy={status === "loading"}>
       {initialNotice && (
-        <p role="status" className="rounded-2xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted">
+        <p
+          role="status"
+          className="rounded-2xl border border-line bg-surface px-4 py-3 text-center text-sm text-ink-muted"
+        >
           {initialNotice}
         </p>
       )}
@@ -90,7 +93,10 @@ export default function EmailLoginForm({ initialNotice }: Props) {
           name="email"
           type="email"
           value={email}
-          onChange={(event) => setEmail(event.target.value)}
+          onChange={(event) => {
+            setEmail(event.target.value)
+            setErrorMessage("")
+          }}
           required
           autoComplete="email"
           spellCheck={false}

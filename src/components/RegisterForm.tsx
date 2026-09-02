@@ -18,6 +18,10 @@ interface RegisterErrorResponse {
 
 const spring = { type: "spring" as const, stiffness: 300, damping: 30, bounce: 0 }
 
+function focusBirthdayDay() {
+  document.querySelector<HTMLInputElement>('[aria-label="Día"]')?.focus()
+}
+
 export default function RegisterForm({ email }: Props) {
   const reducedMotion = useReducedMotion()
   const successHeadingRef = useRef<HTMLHeadingElement>(null)
@@ -46,7 +50,7 @@ export default function RegisterForm({ email }: Props) {
       setStatus("error")
       setFieldErrors(nextErrors)
       if (nextErrors.name) nameRef.current?.focus()
-      else document.querySelector<HTMLInputElement>('[aria-label="Día"]')?.focus()
+      else focusBirthdayDay()
       return
     }
 
@@ -74,16 +78,16 @@ export default function RegisterForm({ email }: Props) {
         setFormError(
           nextServerErrors.name || nextServerErrors.birthday
             ? ""
-            : data.error ?? "No pudimos completar tu registro. Revisa los datos e inténtalo de nuevo.",
+            : (data.error ?? "No pudimos completar tu registro. Revisa los datos e inténtalo de nuevo."),
         )
         if (nextServerErrors.name) nameRef.current?.focus()
-        else if (nextServerErrors.birthday) document.querySelector<HTMLInputElement>('[aria-label="Día"]')?.focus()
+        else if (nextServerErrors.birthday) focusBirthdayDay()
         return
       }
 
       const countdown = toBirthdayCountdown({
         id: "new-registration",
-        name,
+        name: name.trim(),
         birthMonth: Number(birthday.month),
         birthDay: Number(birthday.day),
       })
@@ -132,7 +136,11 @@ export default function RegisterForm({ email }: Props) {
           name="name"
           type="text"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) => {
+            setName(event.target.value)
+            setFieldErrors((current) => ({ ...current, name: undefined }))
+            setFormError("")
+          }}
           required
           maxLength={60}
           autoComplete="name"
@@ -155,7 +163,15 @@ export default function RegisterForm({ email }: Props) {
         />
       </Field>
 
-      <BirthdayField value={birthday} onChange={setBirthday} error={fieldErrors.birthday} />
+      <BirthdayField
+        value={birthday}
+        onChange={(nextBirthday) => {
+          setBirthday(nextBirthday)
+          setFieldErrors((current) => ({ ...current, birthday: undefined }))
+          setFormError("")
+        }}
+        error={fieldErrors.birthday}
+      />
 
       {formError && (
         <p role="alert" className="text-sm text-danger">

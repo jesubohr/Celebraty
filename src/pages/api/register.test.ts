@@ -116,6 +116,20 @@ describe("POST /api/register", () => {
     expect(await res.json()).toMatchObject({ errors: { birthDay: ["Febrero no tiene 31 días."] } })
   })
 
+  it("rejects February 29 for a non-leap birth year", async () => {
+    const rawToken = await createSession(db, "new@example.com", null)
+    const cookies = new FakeCookies()
+    cookies.set(SESSION_COOKIE_NAME, rawToken)
+
+    const res = await registerPOST({
+      request: registerRequest({ name: "Ana", birthMonth: 2, birthDay: 29, birthYear: 1999, website: "" }),
+      cookies: cookies as unknown as AstroCookies,
+    } as never)
+
+    expect(res.status).toBe(400)
+    expect(await res.json()).toMatchObject({ errors: { birthDay: ["Febrero no tiene 29 días en 1999."] } })
+  })
+
   it("rejects a request with no session", async () => {
     const cookies = new FakeCookies()
     const res = await registerPOST({

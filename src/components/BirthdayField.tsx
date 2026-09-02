@@ -30,8 +30,15 @@ const MONTH_NAMES = [
   "Diciembre",
 ]
 
-function daysInMonth(month: number): number {
-  return new Date(2024, month, 0).getDate()
+function daysInMonth(month: number, year = 2024): number {
+  return new Date(year, month, 0).getDate()
+}
+
+function getSegmentRange(segment: Segment, month: string) {
+  if (segment === "day") return { min: 1, max: daysInMonth(Number(month) || 1), fallback: 1 }
+  if (segment === "month") return { min: 1, max: 12, fallback: 1 }
+  const currentYear = new Date().getFullYear()
+  return { min: 1900, max: currentYear, fallback: currentYear }
 }
 
 export function getBirthdayError(value: BirthdayValue): string | undefined {
@@ -44,7 +51,10 @@ export function getBirthdayError(value: BirthdayValue): string | undefined {
   if (day < 1 || day > 31) return "El día debe estar entre 1 y 31."
   if (!value.month) return "Ingresa el mes de tu cumpleaños."
   if (month < 1 || month > 12) return "El mes debe estar entre 1 y 12."
-  if (day > daysInMonth(month)) return `${MONTH_NAMES[month - 1]} no tiene ${day} días.`
+  if (day > daysInMonth(month, value.year ? year : undefined)) {
+    const yearContext = value.year ? ` en ${year}` : ""
+    return `${MONTH_NAMES[month - 1]} no tiene ${day} días${yearContext}.`
+  }
   if (value.year && (value.year.length !== 4 || year < 1900 || year > currentYear)) {
     return `El año debe estar entre 1900 y ${currentYear}.`
   }
@@ -52,7 +62,7 @@ export function getBirthdayError(value: BirthdayValue): string | undefined {
 
 export default function BirthdayField({ value, onChange, error: externalError }: Props) {
   const labelId = useId()
-  const errorId = "birthday-error"
+  const errorId = useId()
   const refs = useRef<Record<Segment, HTMLInputElement | null>>({ day: null, month: null, year: null })
   const [touched, setTouched] = useState(false)
   const error = externalError ?? (touched ? getBirthdayError(value) : undefined)
@@ -109,9 +119,7 @@ export default function BirthdayField({ value, onChange, error: externalError }:
     if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return
     event.preventDefault()
     const direction = event.key === "ArrowUp" ? 1 : -1
-    const max = segment === "day" ? daysInMonth(Number(value.month) || 1) : segment === "month" ? 12 : new Date().getFullYear()
-    const min = segment === "year" ? 1900 : 1
-    const fallback = segment === "year" ? new Date().getFullYear() : min
+    const { min, max, fallback } = getSegmentRange(segment, value.month)
     const next = Math.min(max, Math.max(min, (Number(value[segment]) || fallback) + direction))
     onChange({ ...value, [segment]: segment === "year" ? String(next) : String(next).padStart(2, "0") })
   }

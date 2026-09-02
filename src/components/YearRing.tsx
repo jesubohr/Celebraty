@@ -12,6 +12,13 @@ const LABEL_RADIUS = 142
 const CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS
 const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 const RING_EASE = [0.23, 1, 0.32, 1] as const
+const SHORT_DATE_FORMATTER = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" })
+
+function getDotTransition(reducedMotion: boolean | null, isNew: boolean, index: number) {
+  if (reducedMotion) return { duration: 0 }
+  if (isNew) return { type: "spring" as const, duration: 0.55, bounce: 0.2 }
+  return { duration: 0.25, delay: index * 0.04, ease: RING_EASE }
+}
 
 interface Props {
   countdowns: BirthdayCountdown[]
@@ -35,12 +42,10 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
     return () => window.removeEventListener("celebraty:registered", addRegisteredBirthday)
   }, [])
 
-  const birthdays = useMemo(
-    () => [...countdowns, ...registered].sort(sortCountdowns),
-    [countdowns, registered],
-  )
+  const birthdays = useMemo(() => [...countdowns, ...registered].sort(sortCountdowns), [countdowns, registered])
   const dots = layoutBirthdayDots(birthdays, year)
   const dotById = new Map(dots.map((dot) => [dot.id, dot]))
+  const registeredIds = new Set(registered.map(({ id }) => id))
   const daysInYear = getDaysInYear(bogotaToday)
   const dayOfYear = getDayOfYear(bogotaToday)
   const arcLength = (30 / daysInYear) * CIRCUMFERENCE
@@ -48,7 +53,7 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
   const dateLabel = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long" }).format(bogotaToday)
 
   return (
-    <section className="year-ring" aria-labelledby="upcoming-heading">
+    <section className="year-ring" aria-labelledby={!hasError && birthdays.length > 0 ? "upcoming-heading" : undefined}>
       <div className="year-ring-graphic">
         <svg viewBox="0 0 320 320" aria-hidden="true" focusable="false" className="block size-full overflow-visible">
           <motion.circle
@@ -75,7 +80,7 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
             strokeWidth="5"
             strokeLinecap="round"
             strokeDasharray={`${arcLength} ${CIRCUMFERENCE - arcLength}`}
-            strokeDashoffset={-(dayOfYear / daysInYear) * CIRCUMFERENCE}
+            strokeDashoffset={-((dayOfYear - 1) / daysInYear) * CIRCUMFERENCE}
             transform={`rotate(-90 ${CENTER} ${CENTER})`}
             initial={reducedMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -121,7 +126,7 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
             const dot = dotById.get(birthday.id)
             if (!dot) return null
             const active = activeId === birthday.id
-            const isNew = registered.some(({ id }) => id === birthday.id)
+            const isNew = registeredIds.has(birthday.id)
             return (
               <motion.circle
                 key={birthday.id}
@@ -135,13 +140,7 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
                 strokeWidth="3"
                 initial={reducedMotion ? false : { opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: active ? 1.45 : 1 }}
-                transition={
-                  reducedMotion
-                    ? { duration: 0 }
-                    : isNew
-                      ? { type: "spring", duration: 0.55, bounce: 0.2 }
-                      : { duration: 0.25, delay: index * 0.04, ease: RING_EASE }
-                }
+                transition={getDotTransition(reducedMotion, isNew, index)}
                 style={{ transformOrigin: `${dot.x}px ${dot.y}px` }}
               />
             )
@@ -183,9 +182,7 @@ export default function YearRing({ countdowns, hasError = false, today = new Dat
           <ol className="space-y-2">
             {birthdays.map((birthday) => {
               const active = activeId === birthday.id
-              const date = new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short" }).format(
-                new Date(year, birthday.birthMonth - 1, birthday.birthDay),
-              )
+              const date = SHORT_DATE_FORMATTER.format(new Date(year, birthday.birthMonth - 1, birthday.birthDay))
               return (
                 <motion.li
                   key={birthday.id}

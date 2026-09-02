@@ -1,5 +1,5 @@
 import { Html, Head, Body, Container, Heading, Text, Section, Hr, Preview } from "react-email"
-import { emailFontFamily, palette } from "@/lib/theme"
+import { emailDarkModeCss, emailFontFamily, palette } from "@/lib/theme"
 
 interface BirthdayPerson {
   name: string
@@ -11,16 +11,21 @@ interface Props {
   year: number
 }
 
+export function dailyBirthdaySubject(birthdays: readonly { name: string }[]) {
+  return birthdays.length === 1
+    ? `Hoy cumple años ${birthdays[0].name}`
+    : `Hoy cumplen años ${birthdays.length} amigos`
+}
+
 export function DailyBirthdayDigest({ birthdays, year }: Props) {
   const single = birthdays.length === 1
-  const preview = single ? `Hoy cumple años ${birthdays[0].name}` : `Hoy cumplen años ${birthdays.length} amigos`
+  const preview = dailyBirthdaySubject(birthdays)
   const light = palette.light
-  const dark = palette.dark
 
   return (
     <Html lang="es">
       <Head>
-        <style>{`@media(prefers-color-scheme:dark){.email-body{background-color:${dark.ground.hex}!important}.email-card{background-color:${dark.surface.hex}!important}.email-ink{color:${dark.ink.hex}!important}.email-muted{color:${dark.inkMuted.hex}!important}.email-line{border-color:${dark.line.hex}!important}}`}</style>
+        <style>{emailDarkModeCss}</style>
       </Head>
       <Preview>{preview}</Preview>
       <Body className="email-body" style={{ backgroundColor: light.ground.hex, fontFamily: emailFontFamily, margin: 0 }}>
